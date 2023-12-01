@@ -1,10 +1,10 @@
-const { ether, expectRevert } = require('@openzeppelin/test-helpers');
+const { ether, expectRevert, time } = require('@openzeppelin/test-helpers');
 const { shouldBehaveLikeEscrow } = require('./Escrow.behavior');
 
 const ConditionalEscrowMock = artifacts.require('ConditionalEscrowMock');
 
 contract('ConditionalEscrow', function (accounts) {
-  const [ owner, payee, ...otherAccounts ] = accounts;
+  const [owner, payee, ...otherAccounts] = accounts;
 
   beforeEach(async function () {
     this.escrow = await ConditionalEscrowMock.new({ from: owner });
@@ -12,7 +12,11 @@ contract('ConditionalEscrow', function (accounts) {
 
   context('when withdrawal is allowed', function () {
     beforeEach(async function () {
-      await Promise.all(otherAccounts.map(payee => this.escrow.setAllowed(payee, true)));
+     //Returned error: nonce too low
+     // await Promise.all(otherAccounts.map(payee => this.escrow.setAllowed(payee, true)));
+      for (let i = 0; i < otherAccounts.length; i++) {
+        await this.escrow.setAllowed(otherAccounts[i], true);
+      }
     });
 
     shouldBehaveLikeEscrow(owner, otherAccounts);
@@ -28,7 +32,8 @@ contract('ConditionalEscrow', function (accounts) {
     it('reverts on withdrawals', async function () {
       await this.escrow.deposit(payee, { from: owner, value: amount });
 
-      await expectRevert(this.escrow.withdraw(payee, { from: owner }),
+      await expectRevert(
+        this.escrow.withdraw(payee, { from: owner }),
         'ConditionalEscrow: payee is not allowed to withdraw',
       );
     });

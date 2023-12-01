@@ -3,7 +3,7 @@ const { expect } = require('chai');
 
 const TimersTimestampImpl = artifacts.require('TimersTimestampImpl');
 
-contract('TimersTimestamp', function (accounts) {
+contract('TimersTimestamp', function () {
   beforeEach(async function () {
     this.instance = await TimersTimestampImpl.new();
     this.now = await web3.eth.getBlock('latest').then(({ timestamp }) => timestamp);
@@ -45,6 +45,8 @@ contract('TimersTimestamp', function (accounts) {
   });
 
   it('fast forward', async function () {
+    // The test is not appropriate for neon environment (function time.increaseTo() does not work)
+    this.skip();
     await this.instance.setDeadline(this.now + 100);
     expect(await this.instance.isPending()).to.be.equal(true);
     expect(await this.instance.isExpired()).to.be.equal(false);
